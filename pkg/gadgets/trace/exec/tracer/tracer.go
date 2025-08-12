@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sync"
 	"unsafe"
 
 	"github.com/cilium/ebpf"
@@ -101,6 +102,9 @@ type Tracer struct {
 	exitAtLink    link.Link
 	securityLink  link.Link
 	reader        *perf.Reader
+
+	// eventBufferPool will pool perf.Record objects to avoid allocations.
+	eventBufferPool sync.Pool
 }
 
 func NewTracer(config *Config, enricher gadgets.DataEnricherByMntNs,
@@ -110,6 +114,11 @@ func NewTracer(config *Config, enricher gadgets.DataEnricherByMntNs,
 		config:        config,
 		enricher:      enricher,
 		eventCallback: eventCallback,
+	}
+
+	// Initialize the sync.Pool to create new perf.Record objects when the pool is empty.
+	t.eventBufferPool.New = func() any {
+		return new(perf.Record)
 	}
 
 	if err := t.install(); err != nil {
@@ -207,7 +216,16 @@ func (t *Tracer) install() error {
 
 func (t *Tracer) run() {
 	for {
-		record, err := t.reader.Read()
+		// Get a reusable record from the pool
+		record := t.eventBufferPool.Get().(*perf.Record)
+
+		// Read into the existing record to avoid allocating a new one
+		err := t.reader.ReadInto(record)
+
+		// Defer putting the record back into the pool. This will execute at the
+		// end of the loop iteration, even if we 'continue' early.
+		defer t.eventBufferPool.Put(record)
+
 		if err != nil {
 			if errors.Is(err, perf.ErrClosed) {
 				// nothing to do, we're done
@@ -251,7 +269,9 @@ func (t *Tracer) run() {
 		}
 
 		argsCount := 0
-		buf := []byte{}
+		// Using a pre-allocated buffer can be an additional optimization if needed,
+		// but let's focus on the perf.Record pooling first.
+		buf := make([]byte, 0, 256)
 		args := record.RawSample[unsafe.Offsetof(execsnoopEvent{}.Args):]
 
 		if t.config.GetPaths {
@@ -267,7 +287,8 @@ func (t *Tracer) run() {
 			if c == 0 {
 				event.Args = append(event.Args, string(buf))
 				argsCount = 0
-				buf = []byte{}
+				// Reset buffer for next argument
+				buf = buf[:0]
 			} else {
 				buf = append(buf, c)
 			}
