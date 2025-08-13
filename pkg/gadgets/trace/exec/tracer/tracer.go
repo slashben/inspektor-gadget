@@ -103,8 +103,8 @@ type Tracer struct {
 	securityLink  link.Link
 	reader        *perf.Reader
 
-	// eventBufferPool will pool perf.Record objects to avoid allocations.
-	eventBufferPool sync.Pool
+	// recordPool will pool perf.Record objects to avoid allocations.
+	recordPool sync.Pool
 }
 
 func NewTracer(config *Config, enricher gadgets.DataEnricherByMntNs,
@@ -117,7 +117,7 @@ func NewTracer(config *Config, enricher gadgets.DataEnricherByMntNs,
 	}
 
 	// Initialize the sync.Pool to create new perf.Record objects when the pool is empty.
-	t.eventBufferPool.New = func() any {
+	t.recordPool.New = func() any {
 		return new(perf.Record)
 	}
 
@@ -217,16 +217,14 @@ func (t *Tracer) install() error {
 func (t *Tracer) run() {
 	for {
 		// Get a reusable record from the pool
-		record := t.eventBufferPool.Get().(*perf.Record)
+		record := t.recordPool.Get().(*perf.Record)
 
 		// Read into the existing record to avoid allocating a new one
 		err := t.reader.ReadInto(record)
 
-		// Defer putting the record back into the pool. This will execute at the
-		// end of the loop iteration, even if we 'continue' early.
-		defer t.eventBufferPool.Put(record)
-
 		if err != nil {
+			// Return record to the pool before we exit or continue the loop
+			t.recordPool.Put(record)
 			if errors.Is(err, perf.ErrClosed) {
 				// nothing to do, we're done
 				return
@@ -240,6 +238,8 @@ func (t *Tracer) run() {
 		if record.LostSamples > 0 {
 			msg := fmt.Sprintf("lost %d samples", record.LostSamples)
 			t.eventCallback(types.Base(eventtypes.Warn(msg)))
+			// Return record to the pool before continuing
+			t.recordPool.Put(record)
 			continue
 		}
 
@@ -299,6 +299,9 @@ func (t *Tracer) run() {
 		}
 
 		t.eventCallback(&event)
+
+		// Return the record to the pool after processing
+		t.recordPool.Put(record)
 	}
 }
 
