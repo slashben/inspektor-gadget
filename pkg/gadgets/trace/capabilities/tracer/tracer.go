@@ -19,6 +19,7 @@ package tracer
 import (
 	"errors"
 	"fmt"
+	"math/bits"
 	"os"
 	"sync"
 	"unsafe"
@@ -219,15 +220,23 @@ func (t *Tracer) install() error {
 	return nil
 }
 
-func capsNames(capsBitField uint64) (ret []string) {
-	// Ensure ret is not nil
-	ret = []string{}
+func capsNames(capsBitField uint64) []string {
+	// Calculate the exact number of set capabilities.
+	count := bits.OnesCount64(capsBitField)
+	if count == 0 {
+		return nil // Or []string{} if you prefer a non-nil empty slice
+	}
+
+	// Pre-allocate the slice with the exact capacity needed.
+	ret := make([]string, 0, count)
+
 	for i := capability.Cap(0); i <= capability.CAP_LAST_CAP; i++ {
 		if (1<<uint(i))&capsBitField != 0 {
+			// Now, append will not re-allocate because capacity is sufficient.
 			ret = append(ret, i.String())
 		}
 	}
-	return
+	return ret
 }
 
 func boolPointer(b bool) *bool {
