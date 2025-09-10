@@ -235,6 +235,7 @@ func (k *K8sClient) GetRunningContainers(pod *v1.Pod) []Container {
 func (k *K8sClient) ListContainers() (arr []Container, err error) {
 	// List pods
 	fmt.Fprintf(os.Stderr, "Listing containers for node %s\n", k.fieldSelector)
+	fmt.Fprintf(os.Stderr, "[pkg/container-collection/k8s.go] Listing Kubernetes pods for container discovery\n")
 	pods, err := k.clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{
 		FieldSelector: k.fieldSelector,
 	})

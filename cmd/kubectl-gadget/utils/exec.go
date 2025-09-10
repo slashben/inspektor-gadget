@@ -16,7 +16,9 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -31,6 +33,7 @@ import (
 )
 
 func ExecPod(client *kubernetes.Clientset, node string, namespace string, podCmd string, cmdStdout io.Writer, cmdStderr io.Writer) error {
+	fmt.Fprintf(os.Stderr, "[cmd/kubectl-gadget/utils/exec.go] Listing Kubernetes pods to find gadget pod for command execution on node %s\n", node)
 	listOptions := metav1.ListOptions{
 		LabelSelector: "k8s-app=gadget",
 		FieldSelector: "spec.nodeName=" + node + ",status.phase=Running",

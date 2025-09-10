@@ -216,6 +216,7 @@ func createTraces(gadgetNamespace string, trace *gadgetv1alpha1.Trace) error {
 		return err
 	}
 
+	fmt.Fprintf(os.Stderr, "[cmd/kubectl-gadget/utils/trace.go] Listing Kubernetes pods to create traces on all available nodes\n")
 	opts := metav1.ListOptions{LabelSelector: "k8s-app=gadget"}
 	pods, err := client.CoreV1().Pods(gadgetNamespace).List(context.TODO(), opts)
 	if err != nil {

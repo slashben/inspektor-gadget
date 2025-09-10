@@ -485,6 +485,7 @@ func getPodByCgroups(clientset *kubernetes.Clientset, nodeName string, container
 		return nil, fmt.Errorf("need cgroup paths to work")
 	}
 
+	fmt.Fprintf(os.Stderr, "[pkg/container-collection/options.go] Listing Kubernetes pods on node %s for container enrichment by cgroup matching\n", nodeName)
 	fieldSelector := fields.OneTermEqualSelector("spec.nodeName", nodeName).String()
 	pods, err := clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fieldSelector,

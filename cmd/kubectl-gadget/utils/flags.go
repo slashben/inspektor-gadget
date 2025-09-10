@@ -17,6 +17,7 @@ package utils
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -108,6 +109,7 @@ func AddCommonFlags(command *cobra.Command, params *CommonFlags, gadgetNamespace
 				return commonutils.WrapInErrSetupK8sClient(err)
 			}
 
+			fmt.Fprintf(os.Stderr, "[cmd/kubectl-gadget/utils/flags.go] Listing Kubernetes pods to validate gadget pod exists on node %s\n", params.Node)
 			opts := metav1.ListOptions{
 				LabelSelector: "k8s-app=gadget",
 				FieldSelector: "spec.nodeName=" + params.Node,

@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -30,6 +31,7 @@ import (
 func getGadgetPodsDebug(client *kubernetes.Clientset, gadgetNamespace string) string {
 	var sb strings.Builder
 
+	fmt.Fprintf(os.Stderr, "[cmd/kubectl-gadget/debug.go] Listing Kubernetes pods to collect debug information from all gadget pods\n")
 	listOpts := metav1.ListOptions{
 		LabelSelector: "k8s-app=gadget",
 	}

@@ -23,6 +23,7 @@ import (
 	"io"
 	"net"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -273,6 +274,7 @@ func getGadgetPods(ctx context.Context, config *rest.Config, nodes []string, gad
 		return nil, fmt.Errorf("setting up trace client: %w", err)
 	}
 
+	fmt.Fprintf(os.Stderr, "[pkg/runtime/grpc/grpc-runtime.go] Listing Kubernetes pods to find gadget pods for distributed execution\n")
 	opts := metav1.ListOptions{LabelSelector: "k8s-app=gadget"}
 	pods, err := client.CoreV1().Pods(gadgetNamespace).List(ctx, opts)
 	if err != nil {
