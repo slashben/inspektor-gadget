@@ -51,6 +51,8 @@ type K8sClient struct {
 }
 
 func NewK8sClient(nodeName string) (*K8sClient, error) {
+	fmt.Fprintf(os.Stderr, "Creating K8s client for node %s\n", nodeName)
+	fmt.Printf("Creating K8s client for node %s\n", nodeName)
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
@@ -61,6 +63,8 @@ func NewK8sClient(nodeName string) (*K8sClient, error) {
 	}
 
 	fieldSelector := fields.OneTermEqualSelector("spec.nodeName", nodeName).String()
+
+	fmt.Fprintf(os.Stderr, "Field selector: %s\n", fieldSelector)
 
 	socketPath, err := getContainerRuntimeSocketPath(clientset, nodeName)
 	if err != nil {
