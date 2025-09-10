@@ -60,6 +60,7 @@ func getGadgetPodsDebug(client *kubernetes.Clientset, gadgetNamespace string) st
 }
 
 func getPodLog(client *kubernetes.Clientset, gadgetNamespace string, podname string) string {
+	fmt.Fprintf(os.Stderr, "[cmd/kubectl-gadget/debug.go] Getting logs from Kubernetes pod %s for debug information\n", podname)
 	podLogOpts := corev1.PodLogOptions{}
 	req := client.CoreV1().Pods(gadgetNamespace).GetLogs(podname, &podLogOpts)
 	if req == nil {

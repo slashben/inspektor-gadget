@@ -21,6 +21,8 @@ package containercollection
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -59,6 +61,7 @@ func NewPodInformer(node string) (*PodInformer, error) {
 		return nil, err
 	}
 
+	fmt.Fprintf(os.Stderr, "[pkg/container-collection/podinformer.go] Creating pod ListWatch for real-time pod monitoring on node %s\n", node)
 	podListWatcher := cache.NewListWatchFromClient(clientset.CoreV1().RESTClient(), "pods", "", fields.OneTermEqualSelector("spec.nodeName", node))
 
 	// creates the queue

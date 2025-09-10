@@ -541,6 +541,7 @@ func WithKubernetesEnrichment(nodeName string, kubeconfig *rest.Config) Containe
 						return false
 					}
 				} else {
+					fmt.Fprintf(os.Stderr, "[pkg/container-collection/options.go] Getting Kubernetes pod %s/%s for container enrichment\n", container.K8s.Namespace, container.K8s.PodName)
 					pod, err = clientset.CoreV1().Pods(container.K8s.Namespace).Get(context.TODO(), container.K8s.PodName, metav1.GetOptions{})
 					if err != nil {
 						log.Errorf("kubernetes enricher (from ns/podname): cannot find pod %s/%s: %s", container.K8s.Namespace, container.K8s.PodName, err)

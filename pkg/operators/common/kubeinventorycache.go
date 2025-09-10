@@ -16,6 +16,7 @@ package common
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -250,6 +251,7 @@ func (cache *inventoryCache) Start() {
 		cache.svcs = cachedmap.NewCachedMap[string, *SlimService](2 * time.Second)
 		cache.svcsByIp = cachedmap.NewCachedMap[string, *SlimService](2 * time.Second)
 
+		fmt.Fprintf(os.Stderr, "[pkg/operators/common/kubeinventorycache.go] Setting up pod informer for real-time pod monitoring\n")
 		cache.factory.Core().V1().Pods().Informer().AddEventHandler(cache)
 		cache.factory.Core().V1().Services().Informer().AddEventHandler(cache)
 		cache.exit = make(chan struct{})
