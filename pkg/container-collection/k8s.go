@@ -230,14 +230,17 @@ func (k *K8sClient) GetRunningContainers(pod *v1.Pod) []Container {
 // running in the node.
 func (k *K8sClient) ListContainers() (arr []Container, err error) {
 	// List pods
+	fmt.Fprintf(os.Stderr, "Listing containers for node %s\n", k.fieldSelector)
 	pods, err := k.clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{
 		FieldSelector: k.fieldSelector,
 	})
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error listing pods for node %s: %v\n", k.fieldSelector, err)
 		return nil, err
 	}
 
 	for _, pod := range pods.Items {
+		fmt.Fprintf(os.Stderr, "Found %d containers for pod %s\n", len(pod.Status.ContainerStatuses), pod.Name)
 		containers := k.GetRunningContainers(&pod)
 		arr = append(arr, containers...)
 	}
